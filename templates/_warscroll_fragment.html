@@ -1,0 +1,355 @@
+<div class="warscroll-fragment">
+  <style>
+    @font-face {
+      font-family: "Minion Pro";
+      src: url("{{ asset_base_url }}/fonts/Minion%20Pro%20Regular.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: "Minion Pro";
+      src: url("{{ asset_base_url }}/fonts/Minion%20Pro%20Italic.ttf") format("truetype");
+      font-style: italic;
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: "Minion Pro";
+      src: url("{{ asset_base_url }}/fonts/Minion%20Pro%20Bold.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 700;
+    }
+    .warscroll-fragment {
+      color: #111;
+      font-family: "Minion Pro", Georgia, serif;
+      width: 658px;
+      max-width: 100%;
+    }
+    .warscroll-fragment * { box-sizing: border-box; }
+    .warscroll-card {
+      position: relative;
+      width: 658px;
+      height: 995px;
+      background-image: url("{{ background_url }}");
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+    }
+    .warscroll-header {
+      position: absolute;
+      top: 78px;
+      left: 176px;
+      width: 438px;
+      text-align: center;
+      color: white;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+    }
+    .warscroll-header-strip { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+    .warscroll-header-title {
+      margin: 8px 0 0;
+      font-size: 28px;
+      line-height: 1.05;
+      text-transform: uppercase;
+      word-break: break-word;
+    }
+    .warscroll-header-subtitle {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .warscroll-stats {
+      position: absolute;
+      top: 64px;
+      left: 60px;
+      width: 118px;
+      height: 112px;
+      color: white;
+      font-size: 25px;
+      font-weight: 700;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+    }
+    .warscroll-stat { position: absolute; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .warscroll-stat-move { left: 18px; top: 0; width: 58px; height: 34px; font-size: 24px; }
+    .warscroll-stat-health { left: 0; top: 39px; width: 46px; height: 34px; }
+    .warscroll-stat-save { left: 64px; top: 39px; width: 46px; height: 34px; }
+    .warscroll-stat-control { left: 16px; top: 74px; width: 62px; height: 30px; }
+    .warscroll-body {
+      position: absolute;
+      top: 198px;
+      left: 12px;
+      right: 12px;
+      bottom: 88px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .weapon-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      table-layout: fixed;
+    }
+    .weapon-table thead tr,
+    .weapon-table tbody tr {
+      background-image: linear-gradient(rgba(255,255,255,0.2), rgba(255,255,255,0.2)), url("{{ weapon_banner_url }}");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+    }
+    .weapon-table thead th {
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 3px 6px;
+      text-align: center;
+    }
+    .weapon-table thead th:first-child,
+    .weapon-table tbody td:first-child { width: 30%; text-align: center; }
+    .weapon-table thead th:last-child,
+    .weapon-table tbody td:last-child { width: 28%; text-align: center; }
+    .weapon-table tbody td {
+      padding: 5px 6px;
+      text-align: center;
+      vertical-align: middle;
+      color: #111;
+      background-color: rgba(255,255,255,var(--row-opacity, 0.18));
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      word-break: break-word;
+    }
+    .weapon-table tbody td.weapon-name,
+    .weapon-table tbody td.weapon-ability { line-height: 1.2; }
+    .weapon-table tbody td.weapon-name { position: relative; padding-left: 24px; }
+    .weapon-battle-damaged-icon {
+      position: absolute;
+      left: 6px;
+      top: 5px;
+      width: 15px;
+      height: 15px;
+    }
+    .weapon-override { font-style: italic; }
+    .lower-body { display: flex; gap: 14px; min-height: 0; flex: 1; }
+    .loadout-card {
+      width: 46%;
+      background: rgba(255,255,255,0.58);
+      border: 2px solid rgba(0,0,0,0.25);
+      padding: 14px 16px;
+      font-style: italic;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+    .loadout-card h3,
+    .abilities-panel h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .loadout-card ul {
+      margin: 10px 0 0 18px;
+      padding: 0;
+      font-style: normal;
+    }
+    .loadout-card li { margin-bottom: 6px; }
+    .abilities-panel {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      min-height: 0;
+    }
+    .abilities-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ability-card {
+      border: 2px solid var(--line-color);
+      background: rgba(255,255,255,0.7);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.55);
+    }
+    .ability-banner {
+      min-height: 22px;
+      padding: 4px 10px 4px 28px;
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.15;
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      position: relative;
+    }
+    .ability-banner-icon {
+      position: absolute;
+      left: 6px;
+      top: 4px;
+      width: 16px;
+      height: 16px;
+    }
+    .ability-type-badge {
+      position: absolute;
+      right: -2px;
+      top: -7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .ability-content { padding: 10px 10px 6px; font-size: 14px; line-height: 1.2; }
+    .ability-content p { margin: 0 0 6px; }
+    .ability-content strong { font-weight: 700; }
+    .ability-content em { font-style: italic; }
+    .ability-keywords {
+      display: flex;
+      align-items: stretch;
+      min-height: 22px;
+      border-top: 1px solid rgba(0,0,0,0.15);
+      font-size: 12px;
+    }
+    .ability-keywords-label {
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      color: white;
+      font-weight: 700;
+      min-width: 82px;
+      padding: 4px 8px;
+    }
+    .ability-keywords-value { flex: 1; padding: 4px 8px; }
+    .keywords-footer {
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      bottom: 29px;
+      font-size: 11px;
+      line-height: 1.15;
+      text-transform: uppercase;
+    }
+    .keywords-row {
+      display: flex;
+      min-height: 20px;
+      margin-top: 6px;
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(0,0,0,0.18);
+    }
+    .keywords-row-label {
+      width: 72px;
+      padding: 4px 8px;
+      color: white;
+      font-weight: 700;
+      background-image: linear-gradient(rgba(169,144,10,0.88), rgba(150,125,8,0.88));
+    }
+    .keywords-row-value { flex: 1; padding: 4px 8px; color: #222; }
+  </style>
+  <article class="warscroll-card" aria-label="Warscroll preview">
+    <header class="warscroll-header">
+      <div class="warscroll-header-strip">{{ title_strip }}</div>
+      <div class="warscroll-header-title">{{ warscroll_name }}</div>
+      <div class="warscroll-header-subtitle">{{ warscroll_subtype }}</div>
+    </header>
+
+    <section class="warscroll-stats" aria-label="Characteristics">
+      <div class="warscroll-stat warscroll-stat-move">{{ move }}</div>
+      <div class="warscroll-stat warscroll-stat-health">{{ health }}</div>
+      <div class="warscroll-stat warscroll-stat-save">{{ save }}</div>
+      <div class="warscroll-stat warscroll-stat-control">{{ control }}</div>
+    </section>
+
+    <section class="warscroll-body">
+      {% for table in weapon_tables %}
+        <table class="weapon-table" aria-label="{{ table.title }}">
+          <thead>
+            <tr>
+              {% for header in table.headers %}
+                <th>{{ header }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in table.rows %}
+              <tr style="--row-opacity: {{ row.row_opacity }};">
+                <td class="weapon-name">
+                  {% if row.is_battle_damaged %}
+                    <img class="weapon-battle-damaged-icon" src="{{ asset_base_url }}/{{ row.battle_damage_icon }}" alt="Battle damaged" />
+                  {% endif %}
+                  {{ row.name }}
+                </td>
+                {% for cell in row.cells %}
+                  <td colspan="{{ cell.colspan }}" class="{% if cell.is_override %}weapon-override{% endif %}">{{ cell.value }}</td>
+                {% endfor %}
+                <td class="weapon-ability">{{ row.ability }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endfor %}
+
+      {% if show_lower_sections %}
+        <div class="lower-body">
+          {% if show_loadout %}
+            <section class="loadout-card">
+              <h3>Unit Loadout &amp; Info</h3>
+              {% if loadout_body %}<p>{{ loadout_body }}</p>{% endif %}
+              {% if loadout_points %}
+                <ul>
+                  {% for point in loadout_points %}
+                    {% if point %}<li>{{ point }}</li>{% endif %}
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </section>
+          {% endif %}
+          {% if show_abilities %}
+            <section class="abilities-panel">
+              {% for column in ability_columns %}
+                <div class="abilities-column">
+                  {% for ability in column %}
+                    <article class="ability-card" style="--line-color: {{ ability.line_color }};">
+                      <div class="ability-banner" style="background-image:url('{{ ability.banner_url }}');">
+                        {% if ability.icon_url %}
+                          <img class="ability-banner-icon" src="{{ ability.icon_url }}" alt="" />
+                        {% endif %}
+                        {{ ability.title }}
+                        {% if ability.type_icon_url %}
+                          <span class="ability-type-badge" style="background-image:url('{{ ability.type_icon_url }}'); color: {{ ability.type_text_color }};">{{ ability.type_value }}</span>
+                        {% endif %}
+                      </div>
+                      <div class="ability-content">
+                        {% if ability.name or ability.name_desc %}
+                          <p><em><strong>{{ ability.name }}</strong>{% if ability.name_desc %}: {{ ability.name_desc }}{% endif %}</em></p>
+                        {% endif %}
+                        {% if ability.declare_desc %}<p><strong>Declare:</strong> {{ ability.declare_desc }}</p>{% endif %}
+                        {% if ability.effect_desc %}<p><strong>Effect:</strong> {{ ability.effect_desc }}</p>{% endif %}
+                      </div>
+                      {% if ability.keywords %}
+                        <footer class="ability-keywords">
+                          <div class="ability-keywords-label" style="background-image:url('{{ ability.banner_url }}');">KEYWORDS</div>
+                          <div class="ability-keywords-value">{{ ability.keywords }}</div>
+                        </footer>
+                      {% endif %}
+                    </article>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </section>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+
+    <footer class="keywords-footer">
+      <div class="keywords-row">
+        <div class="keywords-row-label">Keywords</div>
+        <div class="keywords-row-value">{{ keyword_abilities }}</div>
+      </div>
+      <div class="keywords-row">
+        <div class="keywords-row-label">Identity</div>
+        <div class="keywords-row-value">{{ keyword_identities }}</div>
+      </div>
+    </footer>
+  </article>
+</div>
