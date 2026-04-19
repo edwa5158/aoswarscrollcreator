@@ -62,7 +62,9 @@ class Weapon:
             rend=str(data.get("rend", "-")) or "-",
             damage=str(data.get("damage", "")),
             ability=str(data.get("ability", "")),
-            is_battle_damaged=bool(data.get("is_battle_damaged", data.get("isBattleDamaged", False))),
+            is_battle_damaged=bool(
+                data.get("is_battle_damaged", data.get("isBattleDamaged", False))
+            ),
             override_fields=_normalize_override_fields(data.get("override_fields", [])),
         )
 
@@ -78,9 +80,13 @@ class Weapon:
                 if enabled
             ]
         if kind == "melee":
-            override_fields = [field for field in override_fields if field in MELEE_OVERRIDE_ORDER]
+            override_fields = [
+                field for field in override_fields if field in MELEE_OVERRIDE_ORDER
+            ]
         else:
-            override_fields = [field for field in override_fields if field in RANGED_OVERRIDE_ORDER]
+            override_fields = [
+                field for field in override_fields if field in RANGED_OVERRIDE_ORDER
+            ]
         return cls(
             name=str(data.get("name", "")),
             range=str(data.get("range", "")),
@@ -157,12 +163,18 @@ class Ability:
             declare_desc=str(data.get("declare_desc", "")),
             effect_desc=str(data.get("effect_desc", "")),
             keywords=_split_csv_or_lines(data.get("keywords", "")),
-            phase=LEGACY_ABILITY_BANNER_TO_PHASE.get(str(data.get("ability_banner", "")), "start_deployment"),
+            phase=LEGACY_ABILITY_BANNER_TO_PHASE.get(
+                str(data.get("ability_banner", "")), "start_deployment"
+            ),
             timing=str(data.get("ability_timing", "")),
-            ability_type=LEGACY_ABILITY_TYPE_ICON_TO_ID.get(str(data.get("ability_icon_type_path", "")), "standard"),
+            ability_type=LEGACY_ABILITY_TYPE_ICON_TO_ID.get(
+                str(data.get("ability_icon_type_path", "")), "standard"
+            ),
             ability_type_value=str(data.get("ability_type_value", "")),
             restriction=str(data.get("ability_restriction", "")).rstrip(", "),
-            icon=LEGACY_ABILITY_ICON_TO_ID.get(str(data.get("ability_icon_path", "")), "none"),
+            icon=LEGACY_ABILITY_ICON_TO_ID.get(
+                str(data.get("ability_icon_path", "")), "none"
+            ),
         )
 
 
@@ -212,7 +224,8 @@ class WarscrollPayload:
         if not data:
             return cls.default()
         return cls(
-            faction_id=str(data.get("faction_id", DEFAULT_FACTION_ID)) or DEFAULT_FACTION_ID,
+            faction_id=str(data.get("faction_id", DEFAULT_FACTION_ID))
+            or DEFAULT_FACTION_ID,
             custom_faction_name=str(data.get("custom_faction_name", "")),
             warscroll_name=str(data.get("warscroll_name", "")),
             warscroll_subtype=str(data.get("warscroll_subtype", "")),
@@ -221,9 +234,15 @@ class WarscrollPayload:
             control=str(data.get("control", "1")) or "1",
             save=str(data.get("save", "-")) or "-",
             keyword_abilities=_normalize_string_list(data.get("keyword_abilities", [])),
-            keyword_identities=_normalize_string_list(data.get("keyword_identities", [])),
-            ranged_weapons=[Weapon.from_dict(item) for item in data.get("ranged_weapons", [])],
-            melee_weapons=[Weapon.from_dict(item) for item in data.get("melee_weapons", [])],
+            keyword_identities=_normalize_string_list(
+                data.get("keyword_identities", [])
+            ),
+            ranged_weapons=[
+                Weapon.from_dict(item) for item in data.get("ranged_weapons", [])
+            ],
+            melee_weapons=[
+                Weapon.from_dict(item) for item in data.get("melee_weapons", [])
+            ],
             loadout_body=str(data.get("loadout_body", "")),
             loadout_points=_normalize_string_list(data.get("loadout_points", [])),
             abilities=[Ability.from_dict(item) for item in data.get("abilities", [])],
@@ -247,7 +266,9 @@ class WarscrollPayload:
         keywords = data.get("keywords", {})
         faction_id = LEGACY_TEMPLATE_TO_FACTION_ID.get(
             str(faction.get("factionTemplate", "")),
-            LEGACY_BANNER_TO_FACTION_ID.get(str(faction.get("factionWeaponBanner", "")), DEFAULT_FACTION_ID),
+            LEGACY_BANNER_TO_FACTION_ID.get(
+                str(faction.get("factionWeaponBanner", "")), DEFAULT_FACTION_ID
+            ),
         )
         return cls(
             faction_id=faction_id,
@@ -258,13 +279,25 @@ class WarscrollPayload:
             health=str(characteristics.get("warscrollHealth", "1")) or "1",
             control=str(characteristics.get("warscrollControl", "1")) or "1",
             save=str(characteristics.get("warscrollSave", "-")) or "-",
-            keyword_abilities=_normalize_string_list(keywords.get("keywordAbilities", [])),
-            keyword_identities=_normalize_string_list(keywords.get("keywordIdentities", [])),
-            ranged_weapons=[Weapon.from_legacy(item, "ranged") for item in weapons.get("rangedWeaponStats", [])],
-            melee_weapons=[Weapon.from_legacy(item, "melee") for item in weapons.get("meleeWeaponStats", [])],
+            keyword_abilities=_normalize_string_list(
+                keywords.get("keywordAbilities", [])
+            ),
+            keyword_identities=_normalize_string_list(
+                keywords.get("keywordIdentities", [])
+            ),
+            ranged_weapons=[
+                Weapon.from_legacy(item, "ranged")
+                for item in weapons.get("rangedWeaponStats", [])
+            ],
+            melee_weapons=[
+                Weapon.from_legacy(item, "melee")
+                for item in weapons.get("meleeWeaponStats", [])
+            ],
             loadout_body=str(loadout.get("body", "")),
             loadout_points=_normalize_string_list(loadout.get("points", [])),
-            abilities=[Ability.from_legacy(item) for item in abilities.get("abilities", [])],
+            abilities=[
+                Ability.from_legacy(item) for item in abilities.get("abilities", [])
+            ],
         )
 
 
@@ -274,13 +307,21 @@ def payload_from_form(form: Mapping[str, Any]) -> WarscrollPayload:
     ability_count = _read_int(form.get("ability_count"), 0)
     loadout_point_count = _read_int(form.get("loadout_point_count"), 0)
 
-    ranged_weapons = [_weapon_from_form(form, "ranged", index) for index in range(ranged_count)]
-    melee_weapons = [_weapon_from_form(form, "melee", index) for index in range(melee_count)]
+    ranged_weapons = [
+        _weapon_from_form(form, "ranged", index) for index in range(ranged_count)
+    ]
+    melee_weapons = [
+        _weapon_from_form(form, "melee", index) for index in range(melee_count)
+    ]
     abilities = [_ability_from_form(form, index) for index in range(ability_count)]
-    loadout_points = [str(form.get(f"loadout_point_{index}", "")).strip() for index in range(loadout_point_count)]
+    loadout_points = [
+        str(form.get(f"loadout_point_{index}", "")).strip()
+        for index in range(loadout_point_count)
+    ]
 
     return WarscrollPayload(
-        faction_id=str(form.get("faction_id", DEFAULT_FACTION_ID)) or DEFAULT_FACTION_ID,
+        faction_id=str(form.get("faction_id", DEFAULT_FACTION_ID))
+        or DEFAULT_FACTION_ID,
         custom_faction_name=str(form.get("custom_faction_name", "")).strip(),
         warscroll_name=str(form.get("warscroll_name", "")).strip(),
         warscroll_subtype=str(form.get("warscroll_subtype", "")).strip(),
@@ -301,6 +342,7 @@ def payload_from_form(form: Mapping[str, Any]) -> WarscrollPayload:
 def _weapon_from_form(form: Mapping[str, Any], prefix: str, index: int) -> Weapon:
     override_name = f"{prefix}_weapon_{index}_override_fields"
     if hasattr(form, "getlist"):
+        # TODO : Object of type `object` is not callable
         override_fields = form.getlist(override_name)
     else:
         override_fields = form.get(override_name, [])
@@ -325,10 +367,14 @@ def _ability_from_form(form: Mapping[str, Any], index: int) -> Ability:
         declare_desc=str(form.get(f"ability_{index}_declare_desc", "")).strip(),
         effect_desc=str(form.get(f"ability_{index}_effect_desc", "")).strip(),
         keywords=_split_csv_or_lines(form.get(f"ability_{index}_keywords", "")),
-        phase=str(form.get(f"ability_{index}_phase", "start_deployment")) or "start_deployment",
+        phase=str(form.get(f"ability_{index}_phase", "start_deployment"))
+        or "start_deployment",
         timing=str(form.get(f"ability_{index}_timing", "")).strip(),
-        ability_type=str(form.get(f"ability_{index}_ability_type", "standard")) or "standard",
-        ability_type_value=str(form.get(f"ability_{index}_ability_type_value", "")).strip(),
+        ability_type=str(form.get(f"ability_{index}_ability_type", "standard"))
+        or "standard",
+        ability_type_value=str(
+            form.get(f"ability_{index}_ability_type_value", "")
+        ).strip(),
         restriction=str(form.get(f"ability_{index}_restriction", "")).strip(),
         icon=str(form.get(f"ability_{index}_icon", "none")) or "none",
     )

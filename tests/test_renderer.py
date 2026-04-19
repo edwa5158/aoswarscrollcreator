@@ -50,7 +50,10 @@ class RendererTests(unittest.TestCase):
         self.assertIn("LIBERATORS", fragment)
         self.assertIn("Boltstorm Pistol", fragment)
         self.assertIn("LAY LOW THE TYRANTS", fragment)
-        self.assertIn("/static/FactionBackgrounds/Order/Stormcast/Stormcast_Warscroll_Template.png", fragment)
+        self.assertIn(
+            "/static/FactionBackgrounds/Order/Stormcast/Stormcast_Warscroll_Template.png",
+            fragment,
+        )
 
     def test_legacy_state_import_maps_to_canonical_payload(self) -> None:
         payload = WarscrollPayload.from_any_dict(
@@ -80,7 +83,16 @@ class RendererTests(unittest.TestCase):
                             "ability": "Crit (2 Hits)",
                             "isBattleDamaged": True,
                             "isOverride": True,
-                            "override": [{"range": False, "atk": False, "toHit": True, "toWound": True, "rend": False, "damage": False}],
+                            "override": [
+                                {
+                                    "range": False,
+                                    "atk": False,
+                                    "toHit": True,
+                                    "toWound": True,
+                                    "rend": False,
+                                    "damage": False,
+                                }
+                            ],
                         }
                     ]
                 },
@@ -95,14 +107,22 @@ class RendererTests(unittest.TestCase):
                         }
                     ]
                 },
-                "loadout": {"body": "One model can be a Prime.", "points": ["Prime has +1 attack."]},
-                "keywords": {"keywordAbilities": ["Infantry"], "keywordIdentities": ["Order", "Stormcast Eternals"]},
+                "loadout": {
+                    "body": "One model can be a Prime.",
+                    "points": ["Prime has +1 attack."],
+                },
+                "keywords": {
+                    "keywordAbilities": ["Infantry"],
+                    "keywordIdentities": ["Order", "Stormcast Eternals"],
+                },
             }
         )
 
         self.assertEqual(payload.faction_id, "stormcast_eternals")
         self.assertEqual(payload.custom_faction_name, "My Host")
-        self.assertEqual(payload.ranged_weapons[0].override_fields, ["to_hit", "to_wound"])
+        self.assertEqual(
+            payload.ranged_weapons[0].override_fields, ["to_hit", "to_wound"]
+        )
         self.assertEqual(payload.abilities[0].phase, "shoot")
         self.assertEqual(payload.abilities[0].icon, "shooting")
 

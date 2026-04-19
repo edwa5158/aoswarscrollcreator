@@ -5,8 +5,20 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from .catalog import ABILITY_ICONS, ABILITY_PHASES, ABILITY_TYPES, asset_url, get_faction
-from .models import Ability, MELEE_OVERRIDE_ORDER, RANGED_OVERRIDE_ORDER, WarscrollPayload, Weapon
+from .catalog import (
+    ABILITY_ICONS,
+    ABILITY_PHASES,
+    ABILITY_TYPES,
+    asset_url,
+    get_faction,
+)
+from .models import (
+    Ability,
+    MELEE_OVERRIDE_ORDER,
+    RANGED_OVERRIDE_ORDER,
+    WarscrollPayload,
+    Weapon,
+)
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 _renderer_environment = Environment(
@@ -17,12 +29,16 @@ _renderer_environment = Environment(
 )
 
 
-def render_warscroll_fragment(payload: WarscrollPayload, asset_base_url: str = "/static") -> str:
+def render_warscroll_fragment(
+    payload: WarscrollPayload, asset_base_url: str = "/static"
+) -> str:
     template = _renderer_environment.get_template("_warscroll_fragment.html")
     return template.render(**build_render_context(payload, asset_base_url))
 
 
-def build_render_context(payload: WarscrollPayload, asset_base_url: str = "/static") -> dict[str, Any]:
+def build_render_context(
+    payload: WarscrollPayload, asset_base_url: str = "/static"
+) -> dict[str, Any]:
     faction = get_faction(payload.faction_id)
     display_faction_name = payload.custom_faction_name.strip() or faction.name
     loadout_points = [point for point in payload.loadout_points if point.strip()]
@@ -52,7 +68,9 @@ def build_render_context(payload: WarscrollPayload, asset_base_url: str = "/stat
     }
 
 
-def _build_weapon_tables(payload: WarscrollPayload, asset_base_url: str) -> list[dict[str, Any]]:
+def _build_weapon_tables(
+    payload: WarscrollPayload, asset_base_url: str
+) -> list[dict[str, Any]]:
     faction = get_faction(payload.faction_id)
     banner_url = asset_url(asset_base_url, faction.weapon_banner_path)
     tables: list[dict[str, Any]] = []
@@ -62,8 +80,20 @@ def _build_weapon_tables(payload: WarscrollPayload, asset_base_url: str) -> list
         tables.append(
             {
                 "title": "Ranged Weapons",
-                "headers": ["Weapon", "Rng", "Atk", "Hit", "Wnd", "Rnd", "Dmg", "Ability"],
-                "rows": [_build_weapon_row(weapon, True, index) for index, weapon in enumerate(ranged_rows)],
+                "headers": [
+                    "Weapon",
+                    "Rng",
+                    "Atk",
+                    "Hit",
+                    "Wnd",
+                    "Rnd",
+                    "Dmg",
+                    "Ability",
+                ],
+                "rows": [
+                    _build_weapon_row(weapon, True, index)
+                    for index, weapon in enumerate(ranged_rows)
+                ],
                 "banner_url": banner_url,
             }
         )
@@ -72,7 +102,10 @@ def _build_weapon_tables(payload: WarscrollPayload, asset_base_url: str) -> list
             {
                 "title": "Melee Weapons",
                 "headers": ["Weapon", "Atk", "Hit", "Wnd", "Rnd", "Dmg", "Ability"],
-                "rows": [_build_weapon_row(weapon, False, index) for index, weapon in enumerate(melee_rows)],
+                "rows": [
+                    _build_weapon_row(weapon, False, index)
+                    for index, weapon in enumerate(melee_rows)
+                ],
                 "banner_url": banner_url,
             }
         )
@@ -80,34 +113,47 @@ def _build_weapon_tables(payload: WarscrollPayload, asset_base_url: str) -> list
 
 
 def _build_weapon_row(weapon: Weapon, is_ranged: bool, index: int) -> dict[str, Any]:
-    stats = [
-        ("range", _display_range(weapon.range)),
-        ("atk", weapon.atk),
-        ("to_hit", weapon.to_hit),
-        ("to_wound", weapon.to_wound),
-        ("rend", weapon.rend),
-        ("damage", weapon.damage),
-    ] if is_ranged else [
-        ("atk", weapon.atk),
-        ("to_hit", weapon.to_hit),
-        ("to_wound", weapon.to_wound),
-        ("rend", weapon.rend),
-        ("damage", weapon.damage),
-    ]
+    stats = (
+        [
+            ("range", _display_range(weapon.range)),
+            ("atk", weapon.atk),
+            ("to_hit", weapon.to_hit),
+            ("to_wound", weapon.to_wound),
+            ("rend", weapon.rend),
+            ("damage", weapon.damage),
+        ]
+        if is_ranged
+        else [
+            ("atk", weapon.atk),
+            ("to_hit", weapon.to_hit),
+            ("to_wound", weapon.to_wound),
+            ("rend", weapon.rend),
+            ("damage", weapon.damage),
+        ]
+    )
     return {
         "is_battle_damaged": weapon.is_battle_damaged,
         "battle_damage_icon": ABILITY_ICONS["battle_damaged"]["path"],
         "name": weapon.name,
         "ability": weapon.ability or "-",
-        "cells": _build_stat_cells(stats, weapon.override_fields, RANGED_OVERRIDE_ORDER if is_ranged else MELEE_OVERRIDE_ORDER),
+        "cells": _build_stat_cells(
+            stats,
+            weapon.override_fields,
+            RANGED_OVERRIDE_ORDER if is_ranged else MELEE_OVERRIDE_ORDER,
+        ),
         "row_opacity": 0.16 if index % 2 == 0 else 0.28,
     }
 
 
-def _build_stat_cells(stats: list[tuple[str, str]], override_fields: list[str], override_order: list[str]) -> list[dict[str, Any]]:
+def _build_stat_cells(
+    stats: list[tuple[str, str]], override_fields: list[str], override_order: list[str]
+) -> list[dict[str, Any]]:
     active_fields = [field for field in override_order if field in override_fields]
     if not active_fields:
-        return [{"value": value or "-", "colspan": 1, "is_override": False} for _, value in stats]
+        return [
+            {"value": value or "-", "colspan": 1, "is_override": False}
+            for _, value in stats
+        ]
     first_index = override_order.index(active_fields[0])
     last_index = override_order.index(active_fields[-1])
     cells: list[dict[str, Any]] = []
@@ -125,8 +171,14 @@ def _build_stat_cells(stats: list[tuple[str, str]], override_fields: list[str], 
     return cells
 
 
-def _build_ability_columns(abilities: list[Ability], asset_base_url: str) -> list[list[dict[str, Any]]]:
-    rendered = [_build_ability_view(ability, asset_base_url) for ability in abilities if not ability.is_empty()]
+def _build_ability_columns(
+    abilities: list[Ability], asset_base_url: str
+) -> list[list[dict[str, Any]]]:
+    rendered = [
+        _build_ability_view(ability, asset_base_url)
+        for ability in abilities
+        if not ability.is_empty()
+    ]
     columns: list[list[dict[str, Any]]] = [[], []]
     heights = [0, 0]
     for ability in rendered:
@@ -140,7 +192,9 @@ def _build_ability_view(ability: Ability, asset_base_url: str) -> dict[str, Any]
     phase = ABILITY_PHASES.get(ability.phase, ABILITY_PHASES["start_deployment"])
     ability_type = ABILITY_TYPES.get(ability.ability_type, ABILITY_TYPES["standard"])
     icon = ABILITY_ICONS.get(ability.icon, ABILITY_ICONS["none"])
-    title_parts = [part.strip() for part in [ability.restriction, ability.timing] if part.strip()]
+    title_parts = [
+        part.strip() for part in [ability.restriction, ability.timing] if part.strip()
+    ]
     title = " • ".join(title_parts)
     return {
         "banner_url": asset_url(asset_base_url, phase["banner_path"]),
@@ -160,7 +214,14 @@ def _build_ability_view(ability: Ability, asset_base_url: str) -> dict[str, Any]
 
 
 def _estimate_ability_height(ability: Ability, title: str) -> int:
-    text_blocks = [title, ability.name, ability.name_desc, ability.declare_desc, ability.effect_desc, ", ".join(ability.keywords)]
+    text_blocks = [
+        title,
+        ability.name,
+        ability.name_desc,
+        ability.declare_desc,
+        ability.effect_desc,
+        ", ".join(ability.keywords),
+    ]
     return 120 + sum(len(block) for block in text_blocks) // 3
 
 

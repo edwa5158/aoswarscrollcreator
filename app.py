@@ -29,7 +29,12 @@ COOKIE_NAME = "warscroll_session_id"
 SESSION_ID_PATTERN = re.compile(r"^[0-9a-f]{48}$")
 SESSION_STORE: dict[str, dict[str, Any]] = {}
 
-app = Flask(__name__, static_folder="public", static_url_path="/static", template_folder=str(BASE_DIR / "templates"))
+app = Flask(
+    __name__,
+    static_folder="public",
+    static_url_path="/static",
+    template_folder=str(BASE_DIR / "templates"),
+)
 
 
 @app.get("/")
@@ -42,7 +47,11 @@ def index() -> Response:
 def update() -> Response:
     session_id, _ = _get_current_payload()
     action = request.form.get("action", "preview")
-    payload = WarscrollPayload.default() if action == "reset" else payload_from_form(request.form)
+    payload = (
+        WarscrollPayload.default()
+        if action == "reset"
+        else payload_from_form(request.form)
+    )
 
     if action == "add_ranged_weapon":
         payload.ranged_weapons.append(Weapon())
@@ -69,12 +78,22 @@ def import_payload() -> Response:
     session_id, _ = _get_current_payload()
     upload = request.files.get("payload_file")
     if not upload or not upload.filename:
-        return _render_index(WarscrollPayload.default(), session_id, error_message="Choose a JSON file to import.")
+        return _render_index(
+            WarscrollPayload.default(),
+            session_id,
+            error_message="Choose a JSON file to import.",
+        )
     try:
         payload = WarscrollPayload.from_any_dict(json.load(upload.stream))
     except (json.JSONDecodeError, TypeError, ValueError):
-        return _render_index(WarscrollPayload.default(), session_id, error_message="The uploaded file was not valid JSON.")
-    return _render_index(payload, session_id, success_message=f"Imported {upload.filename}.")
+        return _render_index(
+            WarscrollPayload.default(),
+            session_id,
+            error_message="The uploaded file was not valid JSON.",
+        )
+    return _render_index(
+        payload, session_id, success_message=f"Imported {upload.filename}."
+    )
 
 
 @app.get("/export")
@@ -83,14 +102,18 @@ def export_payload() -> Response:
     filename_root = payload.warscroll_name.strip().replace(" ", "_") or "warscroll"
     response = make_response(json.dumps(payload.to_dict(), indent=2))
     response.headers["Content-Type"] = "application/json"
-    response.headers["Content-Disposition"] = f'attachment; filename="{filename_root}.json"'
+    response.headers["Content-Disposition"] = (
+        f'attachment; filename="{filename_root}.json"'
+    )
     return response
 
 
 @app.post("/fragment")
 def render_fragment() -> Response:
     payload = WarscrollPayload.from_any_dict(request.get_json(silent=True) or {})
-    fragment = render_warscroll_fragment(payload, asset_base_url=request.args.get("asset_base_url", "/static"))
+    fragment = render_warscroll_fragment(
+        payload, asset_base_url=request.args.get("asset_base_url", "/static")
+    )
     return Response(fragment, mimetype="text/html")
 
 
@@ -128,18 +151,30 @@ def _render_index(
             success_message=success_message,
         )
     )
-    response.set_cookie(COOKIE_NAME, next_session_id, httponly=True, samesite="Lax", secure=request.is_secure)
+    response.set_cookie(
+        COOKIE_NAME,
+        next_session_id,
+        httponly=True,
+        samesite="Lax",
+        secure=request.is_secure,
+    )
     return response
 
 
 def _get_current_payload() -> tuple[str | None, WarscrollPayload]:
     session_id = request.cookies.get(COOKIE_NAME)
-    if not session_id or not SESSION_ID_PATTERN.fullmatch(session_id) or session_id not in SESSION_STORE:
+    if (
+        not session_id
+        or not SESSION_ID_PATTERN.fullmatch(session_id)
+        or session_id not in SESSION_STORE
+    ):
         return None, WarscrollPayload.default()
     return session_id, WarscrollPayload.from_dict(SESSION_STORE[session_id])
 
 
-def _remove_item(payload: WarscrollPayload, attribute: str, action: str) -> WarscrollPayload:
+def _remove_item(
+    payload: WarscrollPayload, attribute: str, action: str
+) -> WarscrollPayload:
     index = int(action.split(":", 1)[1])
     values = list(getattr(payload, attribute))
     if 0 <= index < len(values):
@@ -151,7 +186,10 @@ def _remove_item(payload: WarscrollPayload, attribute: str, action: str) -> Wars
 def _group_factions() -> list[tuple[str, list[Any]]]:
     grouped: list[tuple[str, list[Any]]] = []
     for alliance in ALLIANCE_ORDER:
-        factions = sorted((theme for theme in FACTIONS.values() if theme.alliance == alliance), key=lambda item: item.name)
+        factions = sorted(
+            (theme for theme in FACTIONS.values() if theme.alliance == alliance),
+            key=lambda item: item.name,
+        )
         grouped.append((alliance, factions))
     return grouped
 
