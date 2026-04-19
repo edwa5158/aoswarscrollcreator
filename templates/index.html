@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AoS Warscroll Creator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="editor-panel">
+        <header class="page-header">
+          <div>
+            <h1>AoS Warscroll Creator</h1>
+            <p>Server-rendered preview with an embeddable HTML fragment renderer.</p>
+          </div>
+          <div class="toolbar-links">
+            <a href="{{ url_for('export_payload') }}">Export JSON</a>
+            <a href="{{ url_for('health') }}">Health</a>
+          </div>
+        </header>
+
+        {% if error_message %}
+          <div class="flash flash-error">{{ error_message }}</div>
+        {% endif %}
+        {% if success_message %}
+          <div class="flash flash-success">{{ success_message }}</div>
+        {% endif %}
+
+        <div class="form-actions form-actions-top">
+          <form method="post">
+            <button type="submit" name="action" value="preview">Refresh preview</button>
+            <button type="submit" name="action" value="reset" class="secondary">Reset</button>
+          </form>
+          <form method="post" action="{{ url_for('import_payload') }}" enctype="multipart/form-data" class="import-form">
+            <input type="file" name="payload_file" accept="application/json,.json" required />
+            <button type="submit">Import JSON</button>
+          </form>
+        </div>
+
+        <form method="post" class="editor-form">
+          <input type="hidden" name="ranged_weapon_count" value="{{ payload.ranged_weapons|length }}" />
+          <input type="hidden" name="melee_weapon_count" value="{{ payload.melee_weapons|length }}" />
+          <input type="hidden" name="ability_count" value="{{ payload.abilities|length }}" />
+          <input type="hidden" name="loadout_point_count" value="{{ payload.loadout_points|length }}" />
+
+          <details open>
+            <summary>Faction</summary>
+            <div class="field-grid two-column">
+              <label>
+                Theme
+                <select name="faction_id">
+                  {% for alliance, factions in faction_groups %}
+                    <optgroup label="{{ alliance }}">
+                      {% for faction in factions %}
+                        <option value="{{ faction.id }}" {% if faction.id == payload.faction_id %}selected{% endif %}>{{ faction.name }}</option>
+                      {% endfor %}
+                    </optgroup>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                Custom faction name
+                <input type="text" name="custom_faction_name" value="{{ payload.custom_faction_name }}" />
+              </label>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Characteristics</summary>
+            <div class="field-grid two-column">
+              <label>Warscroll name<input type="text" name="warscroll_name" value="{{ payload.warscroll_name }}" maxlength="60" /></label>
+              <label>Subtitle<input type="text" name="warscroll_subtype" value="{{ payload.warscroll_subtype }}" maxlength="60" /></label>
+              <label>Move<input type="text" name="move" value="{{ payload.move }}" maxlength="6" /></label>
+              <label>Health<input type="text" name="health" value="{{ payload.health }}" maxlength="3" /></label>
+              <label>Control<input type="text" name="control" value="{{ payload.control }}" maxlength="3" /></label>
+              <label>Save<input type="text" name="save" value="{{ payload.save }}" maxlength="3" /></label>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Ranged weapons</summary>
+            <div class="stack">
+              {% for weapon in payload.ranged_weapons %}
+                <section class="subcard">
+                  <div class="subcard-header">
+                    <h3>Ranged weapon {{ loop.index }}</h3>
+                    <button type="submit" name="action" value="remove_ranged_weapon:{{ loop.index0 }}" class="danger">Remove</button>
+                  </div>
+                  <div class="field-grid weapon-grid">
+                    <label>Name<input type="text" name="ranged_weapon_{{ loop.index0 }}_name" value="{{ weapon.name }}" /></label>
+                    <label>Range<input type="text" name="ranged_weapon_{{ loop.index0 }}_range" value="{{ weapon.range }}" /></label>
+                    <label>Atk<input type="text" name="ranged_weapon_{{ loop.index0 }}_atk" value="{{ weapon.atk }}" /></label>
+                    <label>Hit<input type="text" name="ranged_weapon_{{ loop.index0 }}_to_hit" value="{{ weapon.to_hit }}" /></label>
+                    <label>Wnd<input type="text" name="ranged_weapon_{{ loop.index0 }}_to_wound" value="{{ weapon.to_wound }}" /></label>
+                    <label>Rnd<input type="text" name="ranged_weapon_{{ loop.index0 }}_rend" value="{{ weapon.rend }}" /></label>
+                    <label>Dmg<input type="text" name="ranged_weapon_{{ loop.index0 }}_damage" value="{{ weapon.damage }}" /></label>
+                    <label class="span-all">Ability<textarea name="ranged_weapon_{{ loop.index0 }}_ability" rows="2">{{ weapon.ability }}</textarea></label>
+                    <label class="checkbox-label"><input type="checkbox" name="ranged_weapon_{{ loop.index0 }}_is_battle_damaged" {% if weapon.is_battle_damaged %}checked{% endif %} />Battle damaged</label>
+                    <label class="span-all">
+                      Override columns
+                      <select name="ranged_weapon_{{ loop.index0 }}_override_fields" multiple size="6">
+                        {% for option in ['range', 'atk', 'to_hit', 'to_wound', 'rend', 'damage'] %}
+                          <option value="{{ option }}" {% if option in weapon.override_fields %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                      </select>
+                    </label>
+                  </div>
+                </section>
+              {% endfor %}
+              <button type="submit" name="action" value="add_ranged_weapon">Add ranged weapon</button>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Melee weapons</summary>
+            <div class="stack">
+              {% for weapon in payload.melee_weapons %}
+                <section class="subcard">
+                  <div class="subcard-header">
+                    <h3>Melee weapon {{ loop.index }}</h3>
+                    <button type="submit" name="action" value="remove_melee_weapon:{{ loop.index0 }}" class="danger">Remove</button>
+                  </div>
+                  <div class="field-grid weapon-grid">
+                    <label>Name<input type="text" name="melee_weapon_{{ loop.index0 }}_name" value="{{ weapon.name }}" /></label>
+                    <label>Atk<input type="text" name="melee_weapon_{{ loop.index0 }}_atk" value="{{ weapon.atk }}" /></label>
+                    <label>Hit<input type="text" name="melee_weapon_{{ loop.index0 }}_to_hit" value="{{ weapon.to_hit }}" /></label>
+                    <label>Wnd<input type="text" name="melee_weapon_{{ loop.index0 }}_to_wound" value="{{ weapon.to_wound }}" /></label>
+                    <label>Rnd<input type="text" name="melee_weapon_{{ loop.index0 }}_rend" value="{{ weapon.rend }}" /></label>
+                    <label>Dmg<input type="text" name="melee_weapon_{{ loop.index0 }}_damage" value="{{ weapon.damage }}" /></label>
+                    <label class="span-all">Ability<textarea name="melee_weapon_{{ loop.index0 }}_ability" rows="2">{{ weapon.ability }}</textarea></label>
+                    <label class="checkbox-label"><input type="checkbox" name="melee_weapon_{{ loop.index0 }}_is_battle_damaged" {% if weapon.is_battle_damaged %}checked{% endif %} />Battle damaged</label>
+                    <label class="span-all">
+                      Override columns
+                      <select name="melee_weapon_{{ loop.index0 }}_override_fields" multiple size="5">
+                        {% for option in ['atk', 'to_hit', 'to_wound', 'rend', 'damage'] %}
+                          <option value="{{ option }}" {% if option in weapon.override_fields %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                      </select>
+                    </label>
+                  </div>
+                </section>
+              {% endfor %}
+              <button type="submit" name="action" value="add_melee_weapon">Add melee weapon</button>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Loadout and footer keywords</summary>
+            <div class="field-grid two-column">
+              <label class="span-all">Loadout body<textarea name="loadout_body" rows="4">{{ payload.loadout_body }}</textarea></label>
+              <label class="span-all">Keyword abilities (comma or newline separated)<textarea name="keyword_abilities" rows="4">{{ payload.keyword_abilities|join('\n') }}</textarea></label>
+              <label class="span-all">Keyword identities (comma or newline separated)<textarea name="keyword_identities" rows="4">{{ payload.keyword_identities|join('\n') }}</textarea></label>
+            </div>
+            <div class="stack compact-stack">
+              {% for point in payload.loadout_points %}
+                <div class="inline-row">
+                  <label class="grow">Loadout point {{ loop.index }}<input type="text" name="loadout_point_{{ loop.index0 }}" value="{{ point }}" /></label>
+                  <button type="submit" name="action" value="remove_loadout_point:{{ loop.index0 }}" class="danger">Remove</button>
+                </div>
+              {% endfor %}
+              <button type="submit" name="action" value="add_loadout_point">Add loadout point</button>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Abilities</summary>
+            <div class="stack">
+              {% for ability in payload.abilities %}
+                <section class="subcard">
+                  <div class="subcard-header">
+                    <h3>Ability {{ loop.index }}</h3>
+                    <button type="submit" name="action" value="remove_ability:{{ loop.index0 }}" class="danger">Remove</button>
+                  </div>
+                  <div class="field-grid two-column">
+                    <label>Name<input type="text" name="ability_{{ loop.index0 }}_name" value="{{ ability.name }}" /></label>
+                    <label>
+                      Phase
+                      <select name="ability_{{ loop.index0 }}_phase">
+                        {% for key, config in ability_phases.items() %}
+                          <option value="{{ key }}" {% if key == ability.phase %}selected{% endif %}>{{ config.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </label>
+                    <label>
+                      Timing
+                      <select name="ability_{{ loop.index0 }}_timing">
+                        {% for option in ability_timings %}
+                          <option value="{{ option }}" {% if option == ability.timing %}selected{% endif %}>{{ option or 'None' }}</option>
+                        {% endfor %}
+                      </select>
+                    </label>
+                    <label>
+                      Restriction
+                      <select name="ability_{{ loop.index0 }}_restriction">
+                        {% for option in ability_restrictions %}
+                          <option value="{{ option }}" {% if option == ability.restriction %}selected{% endif %}>{{ option or 'None' }}</option>
+                        {% endfor %}
+                      </select>
+                    </label>
+                    <label>
+                      Ability type
+                      <select name="ability_{{ loop.index0 }}_ability_type">
+                        {% for key, config in ability_types.items() %}
+                          <option value="{{ key }}" {% if key == ability.ability_type %}selected{% endif %}>{{ config.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </label>
+                    <label>Type value<input type="text" name="ability_{{ loop.index0 }}_ability_type_value" value="{{ ability.ability_type_value }}" /></label>
+                    <label>
+                      Icon
+                      <select name="ability_{{ loop.index0 }}_icon">
+                        {% for key, config in ability_icons.items() %}
+                          <option value="{{ key }}" {% if key == ability.icon %}selected{% endif %}>{{ config.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </label>
+                    <label class="span-all">Name description<textarea name="ability_{{ loop.index0 }}_name_desc" rows="3">{{ ability.name_desc }}</textarea></label>
+                    <label class="span-all">Declare<textarea name="ability_{{ loop.index0 }}_declare_desc" rows="3">{{ ability.declare_desc }}</textarea></label>
+                    <label class="span-all">Effect<textarea name="ability_{{ loop.index0 }}_effect_desc" rows="4">{{ ability.effect_desc }}</textarea></label>
+                    <label class="span-all">Ability keywords (comma or newline separated)<textarea name="ability_{{ loop.index0 }}_keywords" rows="3">{{ ability.keywords|join('\n') }}</textarea></label>
+                  </div>
+                </section>
+              {% endfor %}
+              <button type="submit" name="action" value="add_ability">Add ability</button>
+            </div>
+          </details>
+
+          <div class="form-actions">
+            <button type="submit" name="action" value="preview">Refresh preview</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="preview-panel">
+        <div class="preview-header">
+          <h2>Preview</h2>
+          <p><code>POST /fragment</code> returns the embeddable HTML fragment for the current payload shape.</p>
+        </div>
+        <div class="preview-frame">
+          {{ preview_fragment|safe }}
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

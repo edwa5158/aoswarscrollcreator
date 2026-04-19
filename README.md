@@ -1,32 +1,52 @@
-# AoSWarscrollCreator
-Warscroll creator for AoS 4.0
+# AoS Warscroll Creator
 
-# React + TypeScript + Vite
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AoS Warscroll Creator is now a small Python/Flask application with two explicit parts:
 
-Currently, two official plugins are available:
+- a backend renderer that turns a canonical warscroll payload into an embeddable HTML fragment
+- a server-rendered preview UI that edits that payload with classic HTML forms and keeps draft state on the server between redraws
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Requirements
 
-## Expanding the ESLint configuration
+- Python 3.11+
+- pip
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Run locally
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```bash
+python -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+python app.py
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Open http://127.0.0.1:5000/
+
+## Project layout
+
+- `app.py` — Flask app, import/export endpoints, preview UI, lightweight server-side session storage
+- `warscroll_app/models.py` — canonical payload schema and legacy JSON import adapter
+- `warscroll_app/catalog.py` — faction/theme metadata and ability asset registries
+- `warscroll_app/renderer.py` — pure renderer that returns an embeddable HTML fragment
+- `templates/_warscroll_fragment.html` — HTML/CSS fragment for the rendered warscroll
+- `templates/index.html` — server-rendered editor/preview page
+- `public/` — static assets reused from the original project
+
+## Renderer contract
+
+`POST /fragment` accepts either:
+
+- the new canonical payload shape used by `WarscrollPayload`
+- a legacy Redux export from the previous React application
+
+It returns `text/html` containing a self-styled embeddable fragment.
+
+## JSON workflow
+
+- `GET /export` downloads the current canonical payload as JSON
+- `POST /import` accepts either canonical JSON or the legacy Redux export JSON
+
+## Tests
+
+```bash
+python -m unittest discover -s tests
+```
