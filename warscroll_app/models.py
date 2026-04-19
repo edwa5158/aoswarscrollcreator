@@ -30,6 +30,7 @@ class Weapon:
     override_fields: list[str] = field(default_factory=list)
 
     def is_empty(self) -> bool:
+        rend_value = self.rend.strip()
         return not any(
             [
                 self.name.strip(),
@@ -37,7 +38,7 @@ class Weapon:
                 self.atk.strip(),
                 self.to_hit.strip(),
                 self.to_wound.strip(),
-                self.rend.strip() not in {"", "-"},
+                rend_value and rend_value != "-",
                 self.damage.strip(),
                 self.ability.strip(),
                 self.is_battle_damaged,

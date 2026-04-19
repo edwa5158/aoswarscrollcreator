@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 import secrets
 from pathlib import Path
 from typing import Any
@@ -24,6 +26,7 @@ from warscroll_app.renderer import render_warscroll_fragment
 
 BASE_DIR = Path(__file__).resolve().parent
 COOKIE_NAME = "warscroll_session_id"
+SESSION_ID_PATTERN = re.compile(r"^[0-9a-f]{48}$")
 SESSION_STORE: dict[str, dict[str, Any]] = {}
 
 app = Flask(__name__, static_folder="public", static_url_path="/static", template_folder=str(BASE_DIR / "templates"))
@@ -128,8 +131,8 @@ def _render_index(
 
 def _get_current_payload() -> tuple[str, WarscrollPayload]:
     session_id = request.cookies.get(COOKIE_NAME)
-    if not session_id or session_id not in SESSION_STORE:
-        session_id = secrets.token_urlsafe(24)
+    if not session_id or not SESSION_ID_PATTERN.fullmatch(session_id) or session_id not in SESSION_STORE:
+        session_id = secrets.token_hex(24)
         SESSION_STORE[session_id] = WarscrollPayload.default().to_dict()
     return session_id, WarscrollPayload.from_dict(SESSION_STORE[session_id])
 
@@ -152,4 +155,4 @@ def _group_factions() -> list[tuple[str, list[Any]]]:
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", "5000")))
