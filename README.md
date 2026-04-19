@@ -8,21 +8,20 @@ AoS Warscroll Creator is now a small Python/Flask application with two explicit 
 ## Requirements
 
 - Python 3.11+
-- pip
+- [uv](https://docs.astral.sh/uv/)
 
 ## Run locally
 
 ```bash
-python -m venv .venv
-. .venv/bin/activate
-pip install -r requirements.txt
-python app.py
+uv sync
+uv run python app.py
 ```
 
 Open http://127.0.0.1:5000/
 
 ## Project layout
 
+- `pyproject.toml` / `uv.lock` — uv-managed project metadata and locked dependencies
 - `app.py` — Flask app, import/export endpoints, preview UI, lightweight server-side session storage
 - `warscroll_app/models.py` — canonical payload schema and legacy JSON import adapter
 - `warscroll_app/catalog.py` — faction/theme metadata and ability asset registries
@@ -48,5 +47,5 @@ It returns `text/html` containing a self-styled embeddable fragment.
 ## Tests
 
 ```bash
-python -m unittest discover -s tests
+uv run python -m unittest discover -s tests
 ```
