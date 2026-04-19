@@ -101,12 +101,15 @@ def health() -> Response:
 
 def _render_index(
     payload: WarscrollPayload,
-    session_id: str,
+    session_id: str | None,
     *,
     error_message: str | None = None,
     success_message: str | None = None,
 ) -> Response:
-    SESSION_STORE[session_id] = payload.to_dict()
+    next_session_id = secrets.token_hex(24)
+    SESSION_STORE[next_session_id] = payload.to_dict()
+    if session_id and session_id in SESSION_STORE and session_id != next_session_id:
+        del SESSION_STORE[session_id]
     response = make_response(
         render_template(
             "index.html",
@@ -125,15 +128,14 @@ def _render_index(
             success_message=success_message,
         )
     )
-    response.set_cookie(COOKIE_NAME, session_id, httponly=True, samesite="Lax")
+    response.set_cookie(COOKIE_NAME, next_session_id, httponly=True, samesite="Lax", secure=request.is_secure)
     return response
 
 
-def _get_current_payload() -> tuple[str, WarscrollPayload]:
+def _get_current_payload() -> tuple[str | None, WarscrollPayload]:
     session_id = request.cookies.get(COOKIE_NAME)
     if not session_id or not SESSION_ID_PATTERN.fullmatch(session_id) or session_id not in SESSION_STORE:
-        session_id = secrets.token_hex(24)
-        SESSION_STORE[session_id] = WarscrollPayload.default().to_dict()
+        return None, WarscrollPayload.default()
     return session_id, WarscrollPayload.from_dict(SESSION_STORE[session_id])
 
 
